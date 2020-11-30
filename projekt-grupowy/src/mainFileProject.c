@@ -492,8 +492,9 @@ void print_icmp_packet_address(unsigned char* Buffer , int Size) {
 
 	printf("\nsharedMemoryIDs[%d]: %d\n",packet_counter, sharedMemoryIDs[packet_counter]);
 
+	int buflen = 84;// packet size
 	char* bufferToSend;
-	bufferToSend = (char*)malloc(1024); 
+	bufferToSend = (char*)malloc(buflen);
 
 	if (tosbits == 1) {
 	enQueue(sharedMemoryIDs[packet_counter]);
@@ -510,34 +511,45 @@ void print_icmp_packet_address(unsigned char* Buffer , int Size) {
 	}
     
 
-    int granularity = 2; // co ile pakietow dekolejkowanie
-	//mechanizm ktora kolejka ma byc obsluzona pierwsza
-	// najpierw pakiety z class = 1 wyciagane z kolejki
-	// potem pakiety z klasa 2 wyciagane z kolejki
-	if (packet_counter + 1 == granularity) { // jak juz wszystkie pakiety przeslane
-    int len = sizeof(inet_ntoa(dest.sin_addr));
+	 int granularity = 5; // co ile pakietow dekolejkowanie
+		//mechanizm ktora kolejka ma byc obsluzona pierwsza
+		// najpierw pakiety z class = 1 wyciagane z kolejki
+		// potem pakiety z klasa 2 wyciagane z kolejki
+		if (packet_counter + 1 == granularity) { // jak juz wszystkie pakiety przeslane
 
+		struct sockaddr_in sin;
+		int len = sizeof(dest);
+		int mysock = socket(AF_INET, SOCK_DGRAM, 0);
+		sin.sin_port = htons(2000);
+		sin.sin_addr.s_addr =   packet.ipAddress.destinationIP;
+		sin.sin_family = AF_INET;
+		int num = 84;
 
-	if (frontQ1 != -1) { // jesli jest cos w kolejce z class = 1 to najpierw z tej sciagamy pakiety
-	
-	  for (int sizeOfItemsQueue1 =0 ; sizeOfItemsQueue1<cntQ1; sizeOfItemsQueue1++) {  
+		char dataPreparedToBeSent[1024];
 
-		// write to a buffer the data from dequeued segmend ID
-		for (int i = 1; i<= granularity; i++){
-			if (arr_packet[i].id[0] == itemsQ1[frontQ1]) {
-				printf("\nNumer pakietu: %d", i);
-				for (int k = 0; k< Size; k++){
-				//printf("\nDATA TO BE WRITTEN: %d", arr_packet[i].data[k]);
-				memcpy(bufferToSend, (char*)&arr_packet[i].data[k], sizeof(int));
+		if (frontQ1 != -1) { // jesli jest cos w kolejce z class = 1 to najpierw z tej sciagamy pakiety
+
+		  for (int sizeOfItemsQueue1 =0 ; sizeOfItemsQueue1<cntQ1; sizeOfItemsQueue1++) {
+
+			// write to a buffer the data from dequeued segmend ID
+			for (int i = 1; i<= granularity; i++){
+				if (arr_packet[i].id[0] == itemsQ1[frontQ1]) {
+					printf("\nNumer pakietu: %d", i);
+					for (int k = 0; k< Size+1; k++){
+					printf("\nDATA TO BE WRITTEN: %d", arr_packet[i].data[k]);
+					dataPreparedToBeSent[k] = arr_packet[i].data[k];
+				//	strcpy(bufferToSend, "To ja Michal!!!");
+					}
+					memcpy (bufferToSend, dataPreparedToBeSent, Size);
+	                strcpy (packet.ipAddress.destinationIP, inet_ntoa(dest.sin_addr));
+			        strcpy (packet.ipAddress.sourceIP, inet_ntoa(source.sin_addr));
+					//printf("\nSize of bufferToSend: %x", buflen);
 				}
-                strcpy (packet.ipAddress.destinationIP, inet_ntoa(dest.sin_addr));
-		        strcpy (packet.ipAddress.sourceIP, inet_ntoa(source.sin_addr));
+					int iResult = sendto(mysock, bufferToSend, buflen, 0, (struct sockaddr_in*) &sin, sizeof(sin));
 			}
-				//sendto(sock, (char *)bufferToSend, strlen(bufferToSend), MSG_CONFIRM, (struct addresses*) &packet.ipAddress.destinationIP, len); 
-		}
-        deQueue();
-	  	display();
-	  } // koniec sciagania z class 1
+	        deQueue();
+		  	display();
+		  } // koniec sciagania z class 1
 	
 
 
