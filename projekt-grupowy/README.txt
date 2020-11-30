@@ -1,3 +1,8 @@
+This project requires additional libraries:
+apt-get update
+apt-get install libgtk-3-dev
+apt-get install build-essential gnome-devel
+
 The following project is meant to be imported into Eclipse IDE via EGit, but it containes a makefile in the main directory that allows to build an executable file without an IDE
 
 Using the makefile:
@@ -16,3 +21,7 @@ Building with Eclipse:
 - navigate to "C/C++ Build" -> "Settings" -> "Tool Settings" tab -> "GCC C Linker"
 - add an "-rdynamic" option to "Command" field
 - try rebuilding the project and it should build without errors
+
+
+
+
