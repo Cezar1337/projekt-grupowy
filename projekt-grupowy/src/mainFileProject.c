@@ -66,9 +66,10 @@ int main()
 	if (setenv ("DISPLAY", ":0", 0) == -1)
 		error ("setenv");
 	//-----------------initialize gtk--------------------
-	//declare builder and window handlers
+	//declare element handlers
 	GtkBuilder *builder;
 	GtkWidget *window;
+	GtkWidget *btn_start;
 
 	gtk_init(NULL, NULL); //initialize gtk lib
 
@@ -78,6 +79,7 @@ int main()
 	gtk_builder_connect_signals(builder, NULL);
 
 	//get handlers to GUI elements here
+	btn_start = GTK_WIDGET(gtk_builder_get_object(builder, "btn_start"));
 
 	g_object_unref(builder);
 	gtk_widget_show(window); //show the window
@@ -681,6 +683,17 @@ void print_icmp_packet_address(unsigned char* Buffer , int Size) {
 int icmpPacketCounter = 1;
 void incremento(int *n){
   (*n)++;
+}
+
+void on_btn_start_clicked() //start button pressed callback - still wondering if it shouldn't be a state button
+{
+	g_print("hello user\n");
+
+	/*
+	*-------------------------------*
+	*		MAIN LOOP GOES HERE		*
+	*-------------------------------*
+	*/
 }
 
 void on_switch_emulator_destroy() //window closing callback
