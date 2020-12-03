@@ -59,6 +59,11 @@ int itemsQ1[SIZE], frontQ1 = -1, rearQ1 = -1;
 int itemsQ2[SIZE], frontQ2 = -1, rearQ2 = -1;
 int itemsQ3[SIZE], frontQ3 = -1, rearQ3 = -1;
 
+bool SYS_PAUSE=0; //NOT IMPLEMENTED YET, state variable set from "Pause" button
+bool SYS_START=0; //NOT IMPLEMENTED YET, state variable set from "Start" button
+GtkTextBuffer *txtbuff_log; //a global log buffer pointer, used for appending logs
+GtkTextIter iter_log; //log iterator, used to point to end of log textbuffer
+
 int main()
 {
 
@@ -69,7 +74,7 @@ int main()
 	//declare element handlers
 	GtkBuilder *builder;
 	GtkWidget *window;
-	GtkWidget *btn_start;
+	GtkTextView *txtview_log; //only needed to fetch its text buffor pointer
 
 	gtk_init(NULL, NULL); //initialize gtk lib
 
@@ -79,7 +84,9 @@ int main()
 	gtk_builder_connect_signals(builder, NULL);
 
 	//get handlers to GUI elements here
-	btn_start = GTK_WIDGET(gtk_builder_get_object(builder, "btn_start"));
+
+	txtview_log = GTK_TEXT_VIEW(gtk_builder_get_object(builder, "txtview_log"));
+	txtbuff_log = gtk_text_view_get_buffer(txtview_log);
 
 	g_object_unref(builder);
 	gtk_widget_show(window); //show the window
@@ -117,7 +124,6 @@ int main()
 		ProcessPacket(buffer , data_size);
 	  //enQueue 3 elements
  
-
 	} 
 
 	close(sock_raw);
@@ -685,20 +691,49 @@ void incremento(int *n){
   (*n)++;
 }
 
-void on_btn_start_clicked() //start button pressed callback - still wondering if it shouldn't be a state button
+void on_tgbtn_start_toggled(GtkToggleButton *btn, gpointer pause) //start button pressed callback - still wondering if it shouldn't be a state button
 {
-	g_print("hello user\n");
+	if (gtk_toggle_button_get_active(btn)) //if the button is toggled ON
+	{
+		SYS_START=true;
+		//USE THE TWO LINES OF CODE BELOW TO APPEND THE LOG BUFFER!!!
+		//THIRD PARAMETER IN gtk_text_buffer_insert IS THE TEXT YOU WANT TO ADD TO LOGS, IT'S STRING TYPE
+		gtk_text_buffer_get_end_iter(txtbuff_log, &iter_log); //set the iterator to the end of the log textbuffer
+		gtk_text_buffer_insert(txtbuff_log, &iter_log, "added something to logs\n",-1); //add text to the log textbuffer
 
-	/*
-	*-------------------------------*
-	*		MAIN LOOP GOES HERE		*
-	*-------------------------------*
-	*/
+		/*------------------------------*
+		*		MAIN LOOP GOES HERE		* OR DOES IT?! not until I figure out a good way to handle the loop-freeze
+		*------------------------------*/
+	}
+	else
+	{
+		SYS_START=false;
+	}
 }
 
-void on_switch_emulator_destroy() //window closing callback
+//window closing callback
+void on_switch_emulator_destroy()
 {
 	gtk_main_quit();
 }
 
+//callback called when logs are appended, automatically scrolls to the bottom of logs textview
+void on_txtview_log_size_allocate(GtkWidget *widget, GdkRectangle *allocation, gpointer adj)
+{
+	gtk_adjustment_set_value(adj, gtk_adjustment_get_upper(adj)-gtk_adjustment_get_page_size(adj));
+}
+
+//NOT IMPLEMENTED YET
+//callback called with "Pause" button is toggled, sets the global SYS_PAUSE value to interrupt the main loop
+void on_tgbtn_pause_toggled(GtkToggleButton *btn)
+{
+	if(gtk_toggle_button_get_active(btn))
+	{
+		SYS_PAUSE = true;
+	}
+	else
+	{
+		SYS_PAUSE = false;
+	}
+}
 
